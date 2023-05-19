@@ -94,7 +94,7 @@ def _get_token_from_cache(scope=None):
         _save_cache(cache)
         return result
 
-app.jinja_env.globals.update(_build_auth_code_flow=_build_auth_code_flow)  # Used in template
+app.jinja_env.globals.update(_build_auth_code_flow=_build_auth_code_flow)  # Used in templates
 
 if __name__ == "__main__":
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
