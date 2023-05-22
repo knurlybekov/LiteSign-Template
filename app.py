@@ -19,18 +19,45 @@ Session(app)
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+
 @app.route("/")
 def index():
     if not session.get("user"):
         return redirect(url_for("login"))
-    return render_template('index.html', user=session["user"], version=msal.__version__)
+    user_photo_url = get_user_photo_url(session["user"].get("id"), session["user"].get("access_token"))
+    print(user_photo_url)  # Check the printed URL in your application's console
+    return render_template('index.html', user=session["user"], version=msal.__version__, user_photo_url=user_photo_url)
+
+
+def get_user_photo_url(user_id, access_token):
+    # Construct the Graph API endpoint for the user's photo
+    photo_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/photo/$value"
+
+    # Set the request headers with the access token
+    headers = {
+        'Authorization': f'Bearer {access_token}'
+    }
+
+    # Send a GET request to fetch the user's photo
+    response = requests.get(photo_endpoint, headers=headers)
+
+    if response.status_code == 200:
+        # Successful response
+        photo_data = response.content
+        # Process the photo data or return it as needed
+        return photo_data
+
+    # Error handling if the photo retrieval fails
+    # ...
+    return None
+
 
 @app.route("/login")
 def login():
     # Technically we could use empty list [] as scopes to do just sign in,
     # here we choose to also collect end user consent upfront
     session["flow"] = _build_auth_code_flow(scopes=app_config.SCOPE)
-    return render_template("Login.html", auth_url=session["flow"]["auth_uri"], version=msal.__version__)
+    return render_template("login.html", auth_url=session["flow"]["auth_uri"], version=msal.__version__)
 
 @app.route(app_config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
