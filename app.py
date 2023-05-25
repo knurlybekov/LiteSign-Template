@@ -6,7 +6,11 @@ import ssl
 import msal
 import subprocess
 import app_config
+from pymongo.mongo_client import MongoClient
 
+uri = "mongodb+srv://nurlybekovkaren:Qwerty123@cluster0.ax7gy2n.mongodb.net/?retryWrites=true&w=majority"
+# Create a new client and connect to the server
+client = MongoClient(uri)
 
 app = Flask(__name__)
 app.config.from_object(app_config)
@@ -26,6 +30,22 @@ def index():
         return redirect(url_for("login"))
     user_photo_url = get_user_photo_url(session["user"].get("id"), session["user"].get("access_token"))
     print(user_photo_url)  # Check the printed URL in your application's console
+    notification = request.get_json()
+    if notification and 'value' in notification:
+        for user_data in notification['value']:
+            # Print the user details
+            print("New User Created:")
+            print("User ID:", user_data['userId'])
+            print("User Principal Name:", user_data['userPrincipalName'])
+            print("Display Name:", user_data['displayName'])
+            print("Email:", user_data['mail'])
+            print("--------")
+
+    try:
+        client.admin.command('ping')
+        print("Pinged your deployment. You successfully connected to MongoDB!")
+    except Exception as e:
+        print(e)
     return render_template('index.html', user=session["user"], version=msal.__version__, user_photo_url=user_photo_url)
 
 
